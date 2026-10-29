@@ -1,5 +1,5 @@
 import { inngest } from "../client.js";
-import { askQuestion } from "../../service/rag.js";
+import { askQuestion } from "../../services/rag.js";
 
 
 export const askQuestionFn = inngest.createFunction(

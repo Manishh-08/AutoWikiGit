@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { inngest } from "../inngest/client.js";
-import { parseRepo } from "../service/github.js";
+import { parseRepo } from "../services/github.js";
+;
 
 const router = Router();
 

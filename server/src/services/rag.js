@@ -1,5 +1,14 @@
+import "dotenv/config";
 import { ChatOpenAI } from "@langchain/openai";
 import { search } from "./vectorStore.js";
+
+const llm = new ChatOpenAI({
+  model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+  apiKey: process.env.OPENROUTER_API_KEY,
+  configuration: {
+    baseURL: "https://openrouter.ai/api/v1",
+  },
+});
 
 function toText(content) {
   if (typeof content === "string") return content;
@@ -25,7 +34,6 @@ export async function askQuestion(repo, question, topK = 5) {
     .map((doc) => `File: ${doc.metadata.path}\n${doc.pageContent}`)
     .join("\n\n");
 
-  const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
   const response = await llm.invoke(
     `Answer using this repo context only.\n\n${context}\n\nQuestion: ${question}`,
   );
