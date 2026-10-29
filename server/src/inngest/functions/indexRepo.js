@@ -1,6 +1,7 @@
 import { chunkFiles } from "../../services/chunker.js";
 import { fetchRepoFiles } from "../../services/github.js";
 import { saveChunks } from "../../services/vectorStore.js";
+import { auth } from "../../auth/auth.js";
 import { inngest } from "../client.js";
 
 
@@ -8,12 +9,19 @@ import { inngest } from "../client.js";
 export const indexRepo = inngest.createFunction(
   { id: "index-repo", triggers: [{ event: "repo/index.requested" }] },
   async ({ event, step }) => {
-    const { githubToken, owner, repo } = event.data;
+    const { userId, githubAccountId, owner, repo } = event.data;
 
     const repoName = repo.replace(/\.git$/, "");
     const repoKey = `${owner}/${repoName}`;
 
     const files = await step.run("fetch-github-files", async () => {
+      const { accessToken: githubToken } = await auth.api.getAccessToken({
+        body: {
+          userId,
+          accountId: githubAccountId,
+        },
+      });
+
       return fetchRepoFiles(githubToken, owner, repoName)
     })
 

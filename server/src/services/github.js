@@ -61,8 +61,8 @@ export function parseRepo(input) {
   return { owner, repo, repoKey: `${owner}/${repo}` };
 }
 
-export async function fetchRepoFiles(token, owner, repo) {
-  const octokit = new Octokit({ auth: token });
+export async function fetchRepoFiles(githubAccessToken, owner, repo) {
+  const octokit = new Octokit({ auth: githubAccessToken });
 
   const { data: repoInfo } = await octokit.rest.repos.get({ owner, repo }).catch((err) => {
     if (err.status === 404) {
