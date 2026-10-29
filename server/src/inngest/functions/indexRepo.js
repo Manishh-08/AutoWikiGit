@@ -4,34 +4,37 @@ import { saveChunks } from "../../services/vectorStore.js";
 import { auth } from "../../auth/auth.js";
 import { inngest } from "../client.js";
 
-
-
 export const indexRepo = inngest.createFunction(
   { id: "index-repo", triggers: [{ event: "repo/index.requested" }] },
   async ({ event, step }) => {
-    const { userId, githubAccountId, owner, repo } = event.data;
+    const { userId, githubAccountId, githubToken: tokenFromUser, owner, repo } = event.data;
 
     const repoName = repo.replace(/\.git$/, "");
     const repoKey = `${owner}/${repoName}`;
 
     const files = await step.run("fetch-github-files", async () => {
-      const { accessToken: githubToken } = await auth.api.getAccessToken({
-        body: {
-          userId,
-          accountId: githubAccountId,
-        },
-      });
+      let githubToken = tokenFromUser;
 
-      return fetchRepoFiles(githubToken, owner, repoName)
-    })
+      if (!githubToken && userId && githubAccountId) {
+        const { accessToken } = await auth.api.getAccessToken({
+          body: {
+            userId,
+            accountId: githubAccountId,
+          },
+        });
+        githubToken = accessToken;
+      }
+
+      return fetchRepoFiles(githubToken, owner, repoName);
+    });
 
     const documents = await step.run("chunk-files", async () => {
-      return chunkFiles(files, repoKey)
+      return chunkFiles(files, repoKey);
     });
 
     const saveResult = await step.run("save-to-pinecone", async () => {
-      return saveChunks(repoKey, documents)
-    })
+      return saveChunks(repoKey, documents);
+    });
 
     return {
       repo: repoKey,
@@ -40,4 +43,4 @@ export const indexRepo = inngest.createFunction(
       saved: saveResult.saved,
     };
   }
-)
+);

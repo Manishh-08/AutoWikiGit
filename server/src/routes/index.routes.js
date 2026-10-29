@@ -7,83 +7,84 @@ import { parseRepo } from "../services/github.js";
 
 const router = Router();
 
-// GET /api/index/repos - List user repositories from connected GitHub account
+// GET /api/index/repos - List user repositories from connected GitHub account or provided token
 router.get("/repos", async (req, res) => {
-  try {
+  const customToken = req.headers["x-github-token"] || req.query.token;
+
+  let githubToken = customToken;
+
+  if (!githubToken) {
     const accounts = await auth.api.listUserAccounts({
       headers: fromNodeHeaders(req.headers),
     });
     const githubAccount = accounts?.find((account) => account.providerId === "github");
 
-    if (!githubAccount) {
-      return res.status(403).json({
-        error: "A linked GitHub account is required to list repositories",
-        hasGithub: false,
-      });
-    }
-
-    let githubToken;
-    try {
+    if (githubAccount) {
       const tokenRes = await auth.api.getAccessToken({
         body: {
           userId: res.locals.user.id,
           accountId: githubAccount.id,
         },
       });
-      githubToken = tokenRes?.accessToken;
-    } catch {
-      // If getAccessToken isn't available, check account.accessToken
-      githubToken = githubAccount.accessToken;
+      githubToken = tokenRes?.accessToken || githubAccount.accessToken;
     }
-
-    if (!githubToken) {
-      return res.status(400).json({ error: "Could not retrieve GitHub access token" });
-    }
-
-    const octokit = new Octokit({ auth: githubToken });
-    const { data: repos } = await octokit.rest.repos.listForAuthenticatedUser({
-      sort: "updated",
-      per_page: 100,
-      visibility: "all",
-    });
-
-    const formattedRepos = repos.map((r) => ({
-      id: r.id,
-      name: r.name,
-      fullName: r.full_name,
-      owner: r.owner.login,
-      description: r.description,
-      isPrivate: r.private,
-      stars: r.stargazers_count,
-      language: r.language,
-      updatedAt: r.updated_at,
-      htmlUrl: r.html_url,
-      defaultBranch: r.default_branch,
-    }));
-
-    res.json(formattedRepos);
-  } catch (err) {
-    console.error("Error fetching user repos:", err);
-    res.status(500).json({ error: err.message || "Failed to fetch repositories" });
   }
+
+  if (!githubToken) {
+    return res.status(403).json({
+      error: "A linked GitHub account or GitHub personal access token is required to list repositories",
+    });
+  }
+
+  const octokit = new Octokit({ auth: githubToken });
+  const { data: repos } = await octokit.rest.repos.listForAuthenticatedUser({
+    sort: "updated",
+    per_page: 100,
+    visibility: "all",
+  });
+
+  const formattedRepos = repos.map((r) => ({
+    id: r.id,
+    name: r.name,
+    fullName: r.full_name,
+    owner: r.owner.login,
+    description: r.description,
+    isPrivate: r.private,
+    stars: r.stargazers_count,
+    language: r.language,
+    updatedAt: r.updated_at,
+    htmlUrl: r.html_url,
+    defaultBranch: r.default_branch,
+  }));
+
+  res.json(formattedRepos);
 });
 
 // POST /api/index - Index a repository
 router.post("/", async (req, res) => {
-  const { repo: repository } = req.body ?? {};
+  const { repo: repository, token: customToken } = req.body ?? {};
 
   if (!repository) {
     return res.status(400).json({ error: "repo is required" });
   }
 
-  const accounts = await auth.api.listUserAccounts({
-    headers: fromNodeHeaders(req.headers),
-  });
-  const githubAccount = accounts?.find((account) => account.providerId === "github");
+  let githubToken = customToken || req.headers["x-github-token"];
+  let githubAccountId = null;
 
-  if (!githubAccount) {
+  if (!githubToken) {
+    const accounts = await auth.api.listUserAccounts({
+      headers: fromNodeHeaders(req.headers),
+    });
+    const githubAccount = accounts?.find((account) => account.providerId === "github");
+
+    if (githubAccount) {
+      githubAccountId = githubAccount.id;
+    }
+  }
+
+  if (!githubToken && !githubAccountId) {
     return res.status(403).json({
-      error: "A linked GitHub account is required to index repositories",
+      error: "A linked GitHub account or GitHub personal access token is required to index repositories",
     });
   }
 
@@ -92,8 +93,9 @@ router.post("/", async (req, res) => {
   await inngest.send({
     name: "repo/index.requested",
     data: {
-      userId: res.locals.user.id,
-      githubAccountId: githubAccount.id,
+      userId: res.locals.user?.id || "pat-user",
+      githubAccountId,
+      githubToken: githubToken || null,
       owner,
       repo,
       repoKey,

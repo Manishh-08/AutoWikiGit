@@ -30,19 +30,14 @@ router.post("/", async (req, res) => {
     return res.status(202).json({ message, repo: repoKey, question, status: "queued" });
   }
 
-  try {
-    const result = await askQuestion(repoKey, question);
-    return res.json({
-      repo: repoKey,
-      question,
-      status: "completed",
-      answer: result.answer,
-      sources: result.sources,
-    });
-  } catch (error) {
-    console.error("Error in askQuestion:", error);
-    return res.status(500).json({ error: error.message || "Failed to answer question" });
-  }
+  const result = await askQuestion(repoKey, question);
+  res.json({
+    repo: repoKey,
+    question,
+    status: "completed",
+    answer: result.answer,
+    sources: result.sources,
+  });
 });
 
 export default router;
