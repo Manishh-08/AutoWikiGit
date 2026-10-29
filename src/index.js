@@ -3,7 +3,7 @@ import "dotenv/config";
 import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js";
 import indexRoutes from "./routes/index.routes.js";
-// import chatRoutes from "./routes/chat.routes.js"
+import chatRoutes from "./routes/chat.routes.js"
 
 const port = process.env.PORT ?? 3000;
 
@@ -17,7 +17,9 @@ app.get('/health', (req, res) => {
   res.send("All Working");
 })
 
-app.use('/api/index',indexRoutes)
+app.use('/api/index',indexRoutes);
+app.use("/api/chat", chatRoutes);
+
 app.listen(port, () => {
   console.log("server is running on port 3000");
 })
