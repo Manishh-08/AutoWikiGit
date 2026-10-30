@@ -38,6 +38,7 @@ export function IndexRepoDialog() {
     setIsIndexDialogOpen,
     userGithubToken,
     setUserGithubToken,
+    indexedRepos,
     addIndexedRepo,
     updateRepoStatus,
     setSelectedRepo,
@@ -79,19 +80,20 @@ export function IndexRepoDialog() {
         .replace(/\.git$/, "");
       const [owner, name] = clean.split("/");
 
+      const repoKey = `${owner}/${name || owner}`;
+
       addIndexedRepo({
-        repoKey: `${owner}/${name || owner}`,
+        repoKey,
         name: name || owner,
         owner: owner || "user",
         status: "ready",
       });
 
-      setSelectedRepo(`${owner}/${name || owner}`);
-      toast.success(`Repository ${clean} indexing started!`, {
-        description: "Background processing started. Ready to chat soon.",
+      setSelectedRepo(repoKey);
+      updateRepoStatus(repoKey, "ready");
+      toast.success(`${clean} is ready!`, {
+        description: "Repository is indexed. You can start chatting now.",
       });
-
-      updateRepoStatus(`${owner}/${name || owner}`, "ready");
 
       setIsIndexDialogOpen(false);
       setManualInput("");
@@ -369,58 +371,91 @@ export function IndexRepoDialog() {
                     </div>
                   ) : (
                     <div className="space-y-1">
-                      {filteredRepos.map((repo) => (
-                        <div
-                          key={repo.id}
-                          className="flex items-center justify-between rounded-lg p-2.5 transition-colors hover:bg-muted/60 border border-transparent hover:border-border/50 group"
-                        >
-                          <div className="flex flex-col min-w-0 pr-2">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-semibold text-foreground truncate">
-                                {repo.fullName}
-                              </span>
-                              {repo.isPrivate && (
-                                <Badge variant="secondary" className="text-[9px] h-3.5 px-1 gap-0.5">
-                                  <Lock className="h-2.5 w-2.5" />
-                                  Private
-                                </Badge>
-                              )}
-                            </div>
-                            {repo.description && (
-                              <p className="text-[11px] text-muted-foreground truncate max-w-sm">
-                                {repo.description}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
-                              {repo.language && (
-                                <span className="flex items-center gap-1">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                                  {repo.language}
-                                </span>
-                              )}
-                              <span className="flex items-center gap-0.5">
-                                <Star className="h-2.5 w-2.5" />
-                                {repo.stars}
-                              </span>
-                            </div>
-                          </div>
+                      {filteredRepos.map((repo) => {
+                        const indexedItem = indexedRepos.find(
+                          (ir) => ir.repoKey.toLowerCase() === repo.fullName.toLowerCase()
+                        );
+                        const isReady = indexedItem?.status === "ready";
+                        const isIndexing = indexedItem?.status === "indexing";
 
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="h-7 text-xs font-medium shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-all"
-                            onClick={() => handleSelectGithubRepo(repo)}
-                            disabled={indexMutation.isPending}
+                        return (
+                          <div
+                            key={repo.id}
+                            className="flex items-center justify-between rounded-lg p-2.5 transition-colors hover:bg-muted/60 border border-transparent hover:border-border/50 group"
                           >
-                            {indexMutation.isPending &&
-                            indexMutation.variables?.repo === repo.fullName ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              "Index"
-                            )}
-                          </Button>
-                        </div>
-                      ))}
+                            <div className="flex flex-col min-w-0 pr-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-semibold text-foreground truncate">
+                                  {repo.fullName}
+                                </span>
+                                {isReady && (
+                                  <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[9px] h-4 px-1.5 gap-1">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                    Ready
+                                  </Badge>
+                                )}
+                                {isIndexing && (
+                                  <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[9px] h-4 px-1.5 gap-1">
+                                    <Loader2 className="h-2 w-2 animate-spin" />
+                                    Indexing
+                                  </Badge>
+                                )}
+                                {repo.isPrivate && (
+                                  <Badge variant="secondary" className="text-[9px] h-3.5 px-1 gap-0.5">
+                                    <Lock className="h-2.5 w-2.5" />
+                                    Private
+                                  </Badge>
+                                )}
+                              </div>
+                              {repo.description && (
+                                <p className="text-[11px] text-muted-foreground truncate max-w-sm">
+                                  {repo.description}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
+                                {repo.language && (
+                                  <span className="flex items-center gap-1">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                    {repo.language}
+                                  </span>
+                                )}
+                                <span className="flex items-center gap-0.5">
+                                  <Star className="h-2.5 w-2.5" />
+                                  {repo.stars}
+                                </span>
+                              </div>
+                            </div>
+
+                            <Button
+                              size="sm"
+                              variant={isReady ? "default" : "secondary"}
+                              className={`h-7 text-xs font-medium shrink-0 transition-all ${
+                                isReady
+                                  ? "bg-primary text-primary-foreground shadow-xs"
+                                  : "group-hover:bg-primary group-hover:text-primary-foreground"
+                              }`}
+                              onClick={() => {
+                                if (isReady) {
+                                  setSelectedRepo(repo.fullName);
+                                  setIsIndexDialogOpen(false);
+                                } else {
+                                  handleSelectGithubRepo(repo);
+                                }
+                              }}
+                              disabled={indexMutation.isPending}
+                            >
+                              {indexMutation.isPending &&
+                              indexMutation.variables?.repo === repo.fullName ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : isReady ? (
+                                "Chat"
+                              ) : (
+                                "Index"
+                              )}
+                            </Button>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </ScrollArea>

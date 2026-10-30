@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
-import { indexRepository } from "@/lib/api";
+import { indexRepository, fetchRepoStatus } from "@/lib/api";
 
 export function SidebarRepos() {
   const {
@@ -45,12 +45,36 @@ export function SidebarRepos() {
     mutationFn: (repoKey: string) => indexRepository(repoKey),
     onSuccess: (_, repoKey) => {
       updateRepoStatus(repoKey, "ready");
-      toast.success(`Re-indexing requested for ${repoKey}`);
+      toast.success(`${repoKey} is ready to chat!`);
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to re-index");
     },
   });
+
+  // Check and poll status for any repo in "indexing" state
+  useEffect(() => {
+    const indexingRepos = indexedRepos.filter((r) => r.status === "indexing");
+    if (indexingRepos.length === 0) return;
+
+    const interval = setInterval(async () => {
+      for (const repo of indexingRepos) {
+        try {
+          const res = await fetchRepoStatus(repo.repoKey);
+          if (res.status === "ready") {
+            updateRepoStatus(repo.repoKey, "ready", { chunkCount: res.recordCount });
+            toast.success(`${repo.name} is ready!`, {
+              description: "Repository indexing complete. You can now chat.",
+            });
+          }
+        } catch {
+          // ignore network polling errors
+        }
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [indexedRepos, updateRepoStatus]);
 
   const filteredRepos = indexedRepos.filter(
     (r) =>
@@ -143,9 +167,24 @@ export function SidebarRepos() {
                     )}
 
                     <div className="flex flex-col min-w-0">
-                      <span className="truncate font-medium text-foreground">
-                        {repo.name}
-                      </span>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="truncate font-medium text-foreground">
+                          {repo.name}
+                        </span>
+                        {repo.status === "ready" || !repo.status ? (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/10 px-1.5 py-0.2 text-[9px] font-medium text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                            Ready
+                          </span>
+                        ) : repo.status === "indexing" ? (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 px-1.5 py-0.2 text-[9px] font-medium text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+                            Indexing
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.2 text-[9px] font-medium text-destructive border border-destructive/20 shrink-0">
+                            Error
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[10px] text-muted-foreground truncate font-mono">
                         {repo.owner}
                       </span>

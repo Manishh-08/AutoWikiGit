@@ -4,6 +4,7 @@ import { Octokit } from "@octokit/rest";
 import { inngest } from "../inngest/client.js";
 import { auth } from "../auth/auth.js";
 import { parseRepo } from "../services/github.js";
+import { getRepoStatus } from "../services/vectorStore.js";
 
 const router = Router();
 
@@ -104,6 +105,18 @@ router.post("/", async (req, res) => {
   });
 
   res.json({ message: "Repo Indexing", repo: repoKey });
+});
+
+// GET /api/index/status - Get indexing status of a repository
+router.get("/status", async (req, res) => {
+  const { repo } = req.query;
+  if (!repo || typeof repo !== "string") {
+    return res.status(400).json({ error: "repo query parameter is required" });
+  }
+
+  const { repoKey } = parseRepo(repo);
+  const status = await getRepoStatus(repoKey);
+  res.json(status);
 });
 
 export default router;

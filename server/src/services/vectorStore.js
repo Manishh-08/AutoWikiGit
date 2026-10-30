@@ -99,3 +99,22 @@ export async function search(repo, question, topK = DEFAULT_TOP_K) {
     .map(toSearchDocument)
     .filter((doc) => doc.pageContent.trim().length > 0);
 }
+
+export async function getRepoStatus(repo) {
+  const namespace = repoToNamespace(repo);
+  const indexName = process.env.PINECONE_INDEX || "auto-wiki-git";
+  const stats = await pc.index(indexName).describeIndexStats();
+  const ns = stats.namespaces?.[namespace];
+  if (ns && ns.recordCount > 0) {
+    return {
+      repo,
+      status: "ready",
+      recordCount: ns.recordCount,
+    };
+  }
+  return {
+    repo,
+    status: "indexing",
+    recordCount: 0,
+  };
+}

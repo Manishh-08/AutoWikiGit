@@ -37,6 +37,12 @@ export interface IndexResponse {
   saved?: boolean;
 }
 
+export interface RepoStatusResponse {
+  repo: string;
+  status: "ready" | "indexing" | "error";
+  recordCount?: number;
+}
+
 function getStoredToken(): string | null {
   try {
     return useAppStore.getState().userGithubToken;
@@ -142,6 +148,26 @@ export async function indexRepository(params: { repo: string; token?: string } |
     return { message: data, repo };
   }
   return data;
+}
+
+export async function fetchRepoStatus(repo: string): Promise<RepoStatusResponse> {
+  const token = getStoredToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["x-github-token"] = token;
+  }
+
+  const res = await fetch(`${SERVER_URL}/api/index/status?repo=${encodeURIComponent(repo)}`, {
+    method: "GET",
+    credentials: "include",
+    headers,
+  });
+
+  if (!res.ok) {
+    return { repo, status: "ready" };
+  }
+
+  return res.json();
 }
 
 export async function sendChatMessage(params: {

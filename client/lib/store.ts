@@ -72,7 +72,12 @@ export const useAppStore = create<AppState>()(
               selectedRepo: repo.repoKey,
               indexedRepos: state.indexedRepos.map((r) =>
                 r.repoKey === repo.repoKey
-                  ? { ...r, ...repo, indexedAt: repo.indexedAt || new Date().toISOString() }
+                  ? {
+                      ...r,
+                      ...repo,
+                      status: repo.status || "ready",
+                      indexedAt: repo.indexedAt || new Date().toISOString(),
+                    }
                   : r
               ),
             };
@@ -83,7 +88,7 @@ export const useAppStore = create<AppState>()(
               {
                 ...repo,
                 indexedAt: repo.indexedAt || new Date().toISOString(),
-                status: repo.status || "indexing",
+                status: repo.status || "ready",
               },
               ...state.indexedRepos,
             ],

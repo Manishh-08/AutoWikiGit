@@ -229,10 +229,22 @@ export function ChatArea() {
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              <span>Ready for questions</span>
-            </div>
+            {currentRepo?.status === "indexing" ? (
+              <div className="flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                <Loader2 className="h-3 w-3 animate-spin text-amber-500" />
+                <span>Indexing repository in background...</span>
+              </div>
+            ) : currentRepo?.status === "error" ? (
+              <div className="flex items-center gap-1.5 text-[10px] text-destructive font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+                <span>Indexing error</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                <span>Ready to chat</span>
+              </div>
+            )}
           </div>
         </div>
 
