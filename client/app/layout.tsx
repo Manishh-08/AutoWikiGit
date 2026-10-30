@@ -36,6 +36,9 @@ export const metadata: Metadata = {
   title: "AutoWikiGit - AI Repository Knowledge Base & Documentation Assistant",
   description:
     "Index any GitHub repository with Pinecone and query its architecture, workflows, and code in real-time.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
