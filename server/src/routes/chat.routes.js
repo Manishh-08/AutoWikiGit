@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { inngest } from "../inngest/client.js";
 import { parseRepo } from "../services/github.js";
-import { askQuestion } from "../services/rag.js";
 
 const router = Router();
 
@@ -17,26 +16,20 @@ async function startChatJob(repo, question) {
 }
 
 router.post("/", async (req, res) => {
-  const { repo, question, async: isAsync } = req.body ?? {};
+  const { repo, question } = req.body ?? {};
 
   if (!repo || !question) {
     return res.status(400).json({ error: "repo and question are required" });
   }
 
   const { repoKey } = parseRepo(repo);
+  const message = await startChatJob(repo, question);
 
-  if (isAsync) {
-    const message = await startChatJob(repo, question);
-    return res.status(202).json({ message, repo: repoKey, question, status: "queued" });
-  }
-
-  const result = await askQuestion(repoKey, question);
-  res.json({
+  res.status(202).json({
+    message,
     repo: repoKey,
     question,
-    status: "completed",
-    answer: result.answer,
-    sources: result.sources,
+    status: "queued",
   });
 });
 
