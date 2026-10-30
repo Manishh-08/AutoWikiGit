@@ -88,12 +88,10 @@ export function IndexRepoDialog() {
 
       setSelectedRepo(`${owner}/${name || owner}`);
       toast.success(`Repository ${clean} indexing started!`, {
-        description: "Background processing queued. Pinecone vector namespace ready for chat.",
+        description: "Background processing started. Ready to chat soon.",
       });
 
-      setTimeout(() => {
-        updateRepoStatus(`${owner}/${name || owner}`, "ready");
-      }, 2000);
+      updateRepoStatus(`${owner}/${name || owner}`, "ready");
 
       setIsIndexDialogOpen(false);
       setManualInput("");

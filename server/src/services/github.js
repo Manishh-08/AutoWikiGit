@@ -52,17 +52,26 @@ function shouldSkipFile(path, size) {
 }
 
 export function parseRepo(input) {
+  if (!input || typeof input !== "string") {
+    throw new Error("Repository name must be a non-empty string");
+  }
   const clean = input
+    .trim()
     .replace("https://github.com/", "")
     .replace("http://github.com/", "")
-    .replace(/\.git$/, "");
+    .replace(/\.git$/, "")
+    .replace(/^\//, "");
 
-  const [owner, repo] = clean.split("/");
+  const parts = clean.split("/");
+  if (parts.length < 2 || !parts[0] || !parts[1]) {
+    throw new Error("Invalid repository format. Please provide in 'owner/repo' format.");
+  }
+  const [owner, repo] = parts;
   return { owner, repo, repoKey: `${owner}/${repo}` };
 }
 
 export async function fetchRepoFiles(githubAccessToken, owner, repo) {
-  const octokit = new Octokit({ auth: githubAccessToken });
+  const octokit = new Octokit(githubAccessToken ? { auth: githubAccessToken } : {});
 
   const { data: repoInfo } = await octokit.rest.repos.get({ owner, repo }).catch((err) => {
     if (err.status === 404) {

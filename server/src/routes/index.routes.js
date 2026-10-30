@@ -13,7 +13,7 @@ router.get("/repos", async (req, res) => {
 
   let githubToken = customToken;
 
-  if (!githubToken) {
+  if (!githubToken && res.locals.user?.id && res.locals.user.id !== "pat-user") {
     const accounts = await auth.api.listUserAccounts({
       headers: fromNodeHeaders(req.headers),
     });
@@ -60,7 +60,7 @@ router.get("/repos", async (req, res) => {
   res.json(formattedRepos);
 });
 
-// POST /api/index - Index a repository
+// POST /api/index - Index a repository with Inngest
 router.post("/", async (req, res) => {
   const { repo: repository, token: customToken } = req.body ?? {};
 
@@ -71,7 +71,7 @@ router.post("/", async (req, res) => {
   let githubToken = customToken || req.headers["x-github-token"];
   let githubAccountId = null;
 
-  if (!githubToken) {
+  if (!githubToken && res.locals.user?.id && res.locals.user.id !== "pat-user") {
     const accounts = await auth.api.listUserAccounts({
       headers: fromNodeHeaders(req.headers),
     });
@@ -79,13 +79,14 @@ router.post("/", async (req, res) => {
 
     if (githubAccount) {
       githubAccountId = githubAccount.id;
+      const tokenRes = await auth.api.getAccessToken({
+        body: {
+          userId: res.locals.user.id,
+          accountId: githubAccount.id,
+        },
+      });
+      githubToken = tokenRes?.accessToken || githubAccount.accessToken;
     }
-  }
-
-  if (!githubToken && !githubAccountId) {
-    return res.status(403).json({
-      error: "A linked GitHub account or GitHub personal access token is required to index repositories",
-    });
   }
 
   const { owner, repo, repoKey } = parseRepo(repository);
