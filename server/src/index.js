@@ -10,12 +10,24 @@ import { toNodeHandler } from "better-auth/node";
 import { requireAuth } from './middleware/auth.middleware.js';
 
 const port = process.env.PORT ?? 3001;
-const frontendOrigin = process.env.FRONTEND_URL ?? "http://localhost:3000";
 
 const app = express();
+app.set("trust proxy", 1);
+
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "https://auto-wiki-git.vercel.app",
+  "http://localhost:3000",
+].filter(Boolean);
 
 app.use(cors({
-  origin: frontendOrigin,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
   credentials: true,
 }));
 

@@ -14,9 +14,19 @@ import { LandingPage } from "@/components/landing-page";
 export default function Home() {
   const sessionQuery = authClient.useSession();
   const user = sessionQuery?.data?.user;
+  const isPending = sessionQuery?.isPending;
   const { userGithubToken } = useAppStore();
 
   const isAuthenticated = !!user || !!userGithubToken;
+
+  if (isPending && !userGithubToken) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-3">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <span className="text-xs text-muted-foreground font-medium">Loading session...</span>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

@@ -6,6 +6,8 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   trustedOrigins: [
     process.env.FRONTEND_URL ?? "http://localhost:3000",
+    "https://auto-wiki-git.vercel.app",
+    "http://localhost:3000",
   ],
   database: new Pool({
     connectionString: process.env.DATABASE_URL,
