@@ -6,7 +6,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useMutation } from "@tanstack/react-query";
 import { useAppStore, type ChatMessage } from "@/lib/store";
-import { sendChatMessage } from "@/lib/api";
+import { getChatJob, sendChatMessage } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import {
   Message,
@@ -35,6 +35,7 @@ import {
   FolderGit2,
   Code2,
   Plus,
+  Menu,
 } from "lucide-react";
 
 function generateMessageId(prefix: string): string {
@@ -55,6 +56,7 @@ export function ChatArea() {
     setActiveCitation,
     setIsIndexDialogOpen,
     setIsAuthModalOpen,
+    setIsMobileSidebarOpen,
   } = useAppStore();
 
   const [input, setInput] = useState("");
@@ -99,14 +101,43 @@ export function ChatArea() {
           status: "sent",
         });
       } else {
+        const processingMessageId = generateMessageId("assistant");
         addMessage(selectedRepo, {
-          id: generateMessageId("assistant"),
+          id: processingMessageId,
           role: "assistant",
           content: "Your question has been received and is being processed.",
           sources: [],
           timestamp: getTimestamp(),
-          status: "sent",
+          status: "processing",
         });
+
+        if (data.jobId) {
+          const jobId = data.jobId;
+          const repoKey = selectedRepo;
+          const poll = async () => {
+            const result = await getChatJob(jobId);
+
+            if (result.status === "queued") {
+              window.setTimeout(poll, 1500);
+              return;
+            }
+
+            if (result.status === "completed" && result.answer) {
+              useAppStore.getState().updateMessage(repoKey, processingMessageId, {
+                content: result.answer,
+                sources: result.sources || [],
+                status: "sent",
+              });
+            } else {
+              useAppStore.getState().updateMessage(repoKey, processingMessageId, {
+                content: result.error || "Unable to generate an answer.",
+                status: "error",
+              });
+            }
+          };
+
+          void poll();
+        }
       }
     },
     onError: (err: Error) => {
@@ -181,10 +212,18 @@ export function ChatArea() {
             </p>
           </div>
 
-          <div className="flex items-center justify-center pt-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2 w-full max-w-xs mx-auto">
+            <Button
+              variant="outline"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="md:hidden w-full sm:w-auto gap-2 h-9 text-xs font-medium"
+            >
+              <FolderGit2 className="h-4 w-4 text-primary" />
+              View Repositories
+            </Button>
             <Button
               onClick={() => setIsIndexDialogOpen(true)}
-              className="gap-2 h-9 text-xs font-medium"
+              className="w-full sm:w-auto gap-2 h-9 text-xs font-medium"
             >
               <Plus className="h-4 w-4" />
               Index Repository
@@ -211,19 +250,28 @@ export function ChatArea() {
   return (
     <main className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] bg-background overflow-hidden">
       {/* Top Header of Chat Area */}
-      <div className="h-14 border-b border-border/70 px-4 sm:px-6 flex items-center justify-between bg-card/20 shrink-0">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <FolderGit2 className="h-4 w-4 text-primary shrink-0" />
+      <div className="h-14 border-b border-border/70 px-3 sm:px-6 flex items-center justify-between bg-card/20 shrink-0 gap-2">
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="md:hidden h-8 w-8 -ml-1 text-muted-foreground hover:text-foreground shrink-0"
+            title="Open Repositories"
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+          <FolderGit2 className="hidden md:block h-4 w-4 text-primary shrink-0" />
           <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm text-foreground truncate">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="font-semibold text-xs sm:text-sm text-foreground truncate max-w-[150px] xs:max-w-[200px] sm:max-w-md">
                 {selectedRepo}
               </span>
               <a
                 href={`https://github.com/${selectedRepo}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
                 title="View on GitHub"
               >
                 <ExternalLink className="h-3 w-3" />
@@ -231,17 +279,17 @@ export function ChatArea() {
             </div>
             {currentRepo?.status === "indexing" ? (
               <div className="flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-                <Loader2 className="h-3 w-3 animate-spin text-amber-500" />
-                <span>Indexing repository in background...</span>
+                <Loader2 className="h-3 w-3 animate-spin text-amber-500 shrink-0" />
+                <span className="truncate">Indexing in background...</span>
               </div>
             ) : currentRepo?.status === "error" ? (
               <div className="flex items-center gap-1.5 text-[10px] text-destructive font-medium">
-                <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+                <span className="h-1.5 w-1.5 rounded-full bg-destructive shrink-0" />
                 <span>Indexing error</span>
               </div>
             ) : (
               <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)] shrink-0" />
                 <span>Ready to chat</span>
               </div>
             )}
@@ -268,7 +316,7 @@ export function ChatArea() {
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center max-w-lg mx-auto text-center space-y-6 py-8">
             <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center ring-1 ring-primary/20">
@@ -325,17 +373,25 @@ export function ChatArea() {
 
                   {isUser ? (
                     <div className="flex justify-end w-full">
-                      <div className="max-w-[80%] rounded-2xl bg-primary text-primary-foreground px-4 py-3 text-sm shadow-xs leading-relaxed whitespace-pre-wrap break-words">
+                      <div className="max-w-[88%] sm:max-w-[80%] rounded-2xl bg-primary text-primary-foreground px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm shadow-xs leading-relaxed whitespace-pre-wrap break-words">
                         {message.content}
                       </div>
                     </div>
                   ) : (
                     <div className="flex justify-start w-full">
-                      <div className="max-w-[85%] rounded-2xl border border-border/70 bg-card text-foreground p-4 space-y-3 shadow-xs break-words">
+                      <div className="max-w-[95%] sm:max-w-[85%] rounded-2xl border border-border/70 bg-card text-foreground p-3.5 sm:p-4 space-y-3 shadow-xs break-words">
                         <div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed text-sm space-y-3">
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
-                            components={{
+                          {message.status === "processing" ? (
+                            <span className="inline-flex items-center gap-1" aria-label={message.content}>
+                              <span>{message.content}</span>
+                              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.3s]" />
+                              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />
+                              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" />
+                            </span>
+                          ) : (
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
                               code({ className, children, ...props }) {
                                 const match = /language-(\w+)/.exec(className || "");
                                 const isMultiline = String(children).includes("\n");
@@ -377,10 +433,11 @@ export function ChatArea() {
                               ol({ children }) {
                                 return <ol className="list-decimal pl-5 my-2 space-y-1">{children}</ol>;
                               },
-                            }}
-                          >
-                            {message.content}
-                          </ReactMarkdown>
+                              }}
+                            >
+                              {message.content}
+                            </ReactMarkdown>
+                          )}
                         </div>
 
                         {/* Source Citations */}
@@ -444,8 +501,8 @@ export function ChatArea() {
       </div>
 
       {/* Input Bar */}
-      <div className="p-3 sm:p-4 border-t border-border/70 bg-card/30 shrink-0">
-        <div className="max-w-3xl mx-auto space-y-2">
+      <div className="p-2.5 sm:p-4 border-t border-border/70 bg-card/30 shrink-0">
+        <div className="max-w-3xl mx-auto space-y-1.5 sm:space-y-2">
           <div className="relative rounded-2xl border border-border/80 bg-background shadow-xs focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
             <Textarea
               ref={textareaRef}
@@ -454,7 +511,7 @@ export function ChatArea() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               rows={2}
-              className="resize-none border-0 shadow-none focus-visible:ring-0 text-xs sm:text-sm p-3 pr-12 min-h-[56px] max-h-36 font-sans bg-transparent"
+              className="resize-none border-0 shadow-none focus-visible:ring-0 text-xs sm:text-sm p-2.5 sm:p-3 pr-11 sm:pr-12 min-h-[48px] sm:min-h-[56px] max-h-36 font-sans bg-transparent"
               disabled={chatMutation.isPending}
             />
 
@@ -462,18 +519,18 @@ export function ChatArea() {
               size="icon"
               disabled={!input.trim() || chatMutation.isPending}
               onClick={() => handleSend()}
-              className="absolute right-2.5 bottom-2.5 h-8 w-8 rounded-xl shrink-0"
+              className="absolute right-2 bottom-2 sm:right-2.5 sm:bottom-2.5 h-7 w-7 sm:h-8 sm:w-8 rounded-xl shrink-0"
               title="Send (Enter)"
             >
               {chatMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Send className="h-4 w-4" />
+                <Send className="h-3.5 w-3.5" />
               )}
             </Button>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground px-1">
+          <div className="hidden sm:flex items-center justify-between text-[11px] text-muted-foreground px-1">
             <span>
               Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px] font-mono">Enter</kbd> to send, <kbd className="rounded border border-border px-1 py-0.5 text-[10px] font-mono">Shift+Enter</kbd> for newline
             </span>

@@ -90,7 +90,7 @@ export function AuthDialog() {
 
   return (
     <Dialog open={isAuthModalOpen} onOpenChange={setIsAuthModalOpen}>
-      <DialogContent className="sm:max-w-[425px] border-border/80 bg-background/95 backdrop-blur-md">
+      <DialogContent className="w-[95vw] max-w-[425px] max-h-[90vh] overflow-y-auto border-border/80 bg-background/95 backdrop-blur-md p-4 sm:p-6 rounded-2xl">
         <DialogHeader className="space-y-2">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">

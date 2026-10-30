@@ -1,11 +1,12 @@
 import { inngest } from "../client.js";
 import { askQuestion } from "../../services/rag.js";
+import { completeChatJob, failChatJob } from "../../services/chatJobs.js";
 
 
 export const askQuestionFn = inngest.createFunction(
   { id: "ask-question", triggers: [{ event: "chat/question.requested" }] },
   async ({ event, step }) => {
-    const { repo, question } = event.data;
+    const { jobId, repo, question } = event.data;
 
 
     try {
@@ -13,6 +14,7 @@ export const askQuestionFn = inngest.createFunction(
         return askQuestion(repo, question);
       });
 
+      await completeChatJob(jobId, result.answer, result.sources);
 
       return {
         repo,
@@ -22,6 +24,7 @@ export const askQuestionFn = inngest.createFunction(
         sources: result.sources,
       };
     } catch (error) {
+      await failChatJob(jobId, error instanceof Error ? error.message : "Unable to answer question");
       throw error;
     }
   },

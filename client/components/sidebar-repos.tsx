@@ -15,6 +15,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   Search,
   Plus,
   FolderGit2,
@@ -29,7 +35,11 @@ import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { indexRepository, fetchRepoStatus } from "@/lib/api";
 
-export function SidebarRepos() {
+interface SidebarBodyProps {
+  onSelectRepo?: () => void;
+}
+
+function SidebarBody({ onSelectRepo }: SidebarBodyProps) {
   const {
     indexedRepos,
     selectedRepo,
@@ -52,30 +62,6 @@ export function SidebarRepos() {
     },
   });
 
-  // Check and poll status for any repo in "indexing" state
-  useEffect(() => {
-    const indexingRepos = indexedRepos.filter((r) => r.status === "indexing");
-    if (indexingRepos.length === 0) return;
-
-    const interval = setInterval(async () => {
-      for (const repo of indexingRepos) {
-        try {
-          const res = await fetchRepoStatus(repo.repoKey);
-          if (res.status === "ready") {
-            updateRepoStatus(repo.repoKey, "ready", { chunkCount: res.recordCount });
-            toast.success(`${repo.name} is ready!`, {
-              description: "Repository indexing complete. You can now chat.",
-            });
-          }
-        } catch {
-          // ignore network polling errors
-        }
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [indexedRepos, updateRepoStatus]);
-
   const filteredRepos = indexedRepos.filter(
     (r) =>
       r.repoKey.toLowerCase().includes(search.toLowerCase()) ||
@@ -85,6 +71,7 @@ export function SidebarRepos() {
 
   const handleSelect = (repoKey: string) => {
     setSelectedRepo(repoKey);
+    if (onSelectRepo) onSelectRepo();
   };
 
   const handleRemove = (e: React.MouseEvent, repoKey: string) => {
@@ -100,9 +87,9 @@ export function SidebarRepos() {
   };
 
   return (
-    <aside className="w-80 shrink-0 border-r border-border/70 bg-card/40 flex flex-col h-[calc(100vh-3.5rem)] select-none">
+    <div className="flex flex-col h-full w-full select-none">
       {/* Top Search & Actions */}
-      <div className="p-3.5 space-y-2.5 border-b border-border/60">
+      <div className="p-3.5 space-y-2.5 border-b border-border/60 shrink-0">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
             <FolderGit2 className="h-3.5 w-3.5 text-primary" />
@@ -124,7 +111,10 @@ export function SidebarRepos() {
         </div>
 
         <Button
-          onClick={() => setIsIndexDialogOpen(true)}
+          onClick={() => {
+            if (onSelectRepo) onSelectRepo();
+            setIsIndexDialogOpen(true);
+          }}
           className="w-full h-8 text-xs font-medium gap-1.5 shadow-xs"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -197,7 +187,7 @@ export function SidebarRepos() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground shrink-0"
+                        className="h-6 w-6 opacity-80 md:opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground shrink-0"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <MoreVertical className="h-3.5 w-3.5" />
@@ -237,6 +227,61 @@ export function SidebarRepos() {
           </div>
         )}
       </ScrollArea>
-    </aside>
+    </div>
+  );
+}
+
+export function SidebarRepos() {
+  const {
+    indexedRepos,
+    isMobileSidebarOpen,
+    setIsMobileSidebarOpen,
+    updateRepoStatus,
+  } = useAppStore();
+
+  // Check and poll status for any repo in "indexing" state
+  useEffect(() => {
+    const indexingRepos = indexedRepos.filter((r) => r.status === "indexing");
+    if (indexingRepos.length === 0) return;
+
+    const interval = setInterval(async () => {
+      for (const repo of indexingRepos) {
+        try {
+          const res = await fetchRepoStatus(repo.repoKey);
+          if (res.status === "ready") {
+            updateRepoStatus(repo.repoKey, "ready", { chunkCount: res.recordCount });
+            toast.success(`${repo.name} is ready!`, {
+              description: "Repository indexing complete. You can now chat.",
+            });
+          }
+        } catch {
+          // ignore network polling errors
+        }
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [indexedRepos, updateRepoStatus]);
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex w-72 lg:w-80 shrink-0 border-r border-border/70 bg-card/40 flex-col h-[calc(100vh-3.5rem)] select-none">
+        <SidebarBody />
+      </aside>
+
+      {/* Mobile Slide-Over Drawer */}
+      <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+        <SheetContent
+          side="left"
+          className="p-0 w-[85vw] max-w-[320px] bg-card border-r border-border/70 flex flex-col h-full md:hidden"
+        >
+          <SheetHeader className="sr-only">
+            <SheetTitle>Repositories</SheetTitle>
+          </SheetHeader>
+          <SidebarBody onSelectRepo={() => setIsMobileSidebarOpen(false)} />
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

@@ -23,6 +23,7 @@ import {
   ExternalLink,
   LogOut,
   FolderGit2,
+  Menu,
 } from "lucide-react";
 import { GithubIcon } from "@/components/icons";
 import { toast } from "sonner";
@@ -30,7 +31,12 @@ import { toast } from "sonner";
 export function Navbar() {
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
-  const { selectedRepo, setIsAuthModalOpen, setUserGithubToken } = useAppStore();
+  const {
+    selectedRepo,
+    setIsAuthModalOpen,
+    setUserGithubToken,
+    setIsMobileSidebarOpen,
+  } = useAppStore();
 
   const sessionQuery = authClient.useSession();
   const user = sessionQuery?.data?.user;
@@ -49,18 +55,28 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/85 backdrop-blur-md">
-      <div className="flex h-14 items-center justify-between px-4 sm:px-6">
-        {/* Brand / Title */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-            <GitBranch className="h-5 w-5" />
+      <div className="flex h-14 items-center justify-between px-3 sm:px-6">
+        {/* Left: Mobile Menu Toggle + Brand */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="md:hidden h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+            title="Toggle Repositories"
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+
+          <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs shrink-0">
+            <GitBranch className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="font-heading font-bold text-base tracking-tight">
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="font-heading font-bold text-sm sm:text-base tracking-tight truncate">
                 AutoWikiGit
               </span>
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-mono font-medium">
+              <Badge variant="outline" className="hidden sm:inline-flex text-[10px] px-1.5 py-0 h-4 font-mono font-medium">
                 Wiki
               </Badge>
             </div>

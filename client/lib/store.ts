@@ -7,7 +7,7 @@ export interface ChatMessage {
   content: string;
   sources?: string[];
   timestamp: string;
-  status?: "sending" | "sent" | "error";
+  status?: "sending" | "processing" | "sent" | "error";
   error?: string;
 }
 
@@ -30,6 +30,7 @@ interface AppState {
   activeCitation: { path: string; repo: string } | null;
   isIndexDialogOpen: boolean;
   isAuthModalOpen: boolean;
+  isMobileSidebarOpen: boolean;
   chatMode: "sync" | "async";
   searchQuery: string;
 
@@ -44,6 +45,7 @@ interface AppState {
   setActiveCitation: (citation: { path: string; repo: string } | null) => void;
   setIsIndexDialogOpen: (open: boolean) => void;
   setIsAuthModalOpen: (open: boolean) => void;
+  setIsMobileSidebarOpen: (open: boolean) => void;
   setChatMode: (mode: "sync" | "async") => void;
   setSearchQuery: (query: string) => void;
 }
@@ -58,6 +60,7 @@ export const useAppStore = create<AppState>()(
       activeCitation: null,
       isIndexDialogOpen: false,
       isAuthModalOpen: false,
+      isMobileSidebarOpen: false,
       chatMode: "sync",
       searchQuery: "",
 
@@ -140,6 +143,7 @@ export const useAppStore = create<AppState>()(
       setActiveCitation: (citation) => set({ activeCitation: citation }),
       setIsIndexDialogOpen: (open) => set({ isIndexDialogOpen: open }),
       setIsAuthModalOpen: (open) => set({ isAuthModalOpen: open }),
+      setIsMobileSidebarOpen: (open) => set({ isMobileSidebarOpen: open }),
       setChatMode: (mode) => set({ chatMode: mode }),
       setSearchQuery: (query) => set({ searchQuery: query }),
     }),

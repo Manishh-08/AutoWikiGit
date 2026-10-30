@@ -180,9 +180,9 @@ export function IndexRepoDialog() {
 
   return (
     <Dialog open={isIndexDialogOpen} onOpenChange={setIsIndexDialogOpen}>
-      <DialogContent className="sm:max-w-[580px] border-border/80 bg-background/95 backdrop-blur-md p-6">
+      <DialogContent className="w-[95vw] max-w-[580px] max-h-[90vh] overflow-y-auto border-border/80 bg-background/95 backdrop-blur-md p-4 sm:p-6 rounded-2xl">
         <DialogHeader className="space-y-1.5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <Database className="h-5 w-5" />

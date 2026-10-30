@@ -100,7 +100,7 @@ export function LandingPage() {
               variant="outline"
               size="sm"
               onClick={() => setIsAuthModalOpen(true)}
-              className="h-9 px-3 text-xs font-medium"
+              className="hidden sm:inline-flex h-9 px-3 text-xs font-medium"
             >
               Email Sign In
             </Button>
@@ -109,14 +109,15 @@ export function LandingPage() {
               size="sm"
               onClick={handleGithubSignIn}
               disabled={loading}
-              className="h-9 gap-2 px-4 text-xs font-medium shadow-xs"
+              className="h-9 gap-1.5 sm:gap-2 px-3 sm:px-4 text-xs font-medium shadow-xs"
             >
               {loading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <GithubIcon className="h-3.5 w-3.5" />
               )}
-              <span>Continue with GitHub</span>
+              <span className="hidden sm:inline">Continue with GitHub</span>
+              <span className="sm:hidden">GitHub Sign In</span>
             </Button>
           </div>
         </div>
@@ -131,7 +132,7 @@ export function LandingPage() {
               <span>AI-Powered GitHub Repository Documentation</span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl font-heading font-extrabold tracking-tight text-foreground leading-[1.15]">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-heading font-extrabold tracking-tight text-foreground leading-[1.15]">
               Turn any GitHub repository into an interactive{" "}
               <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
                 knowledge wiki
@@ -337,7 +338,7 @@ export function LandingPage() {
 
       {/* Token Dialog */}
       <Dialog open={tokenDialogOpen} onOpenChange={setTokenDialogOpen}>
-        <DialogContent className="sm:max-w-[440px] border-border/80 bg-background/95 backdrop-blur-md">
+        <DialogContent className="w-[95vw] max-w-[440px] max-h-[90vh] overflow-y-auto border-border/80 bg-background/95 backdrop-blur-md p-4 sm:p-6 rounded-2xl">
           <DialogHeader className="space-y-1.5">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">

@@ -20,6 +20,7 @@ export interface RepoInfo {
 }
 
 export interface ChatResponse {
+  jobId?: string;
   repo: string;
   question: string;
   status: "completed" | "queued" | "error";
@@ -27,6 +28,19 @@ export interface ChatResponse {
   sources?: string[];
   message?: string;
   error?: string;
+}
+
+export async function getChatJob(jobId: string): Promise<ChatResponse> {
+  const res = await fetch(`${SERVER_URL}/api/chat/jobs/${jobId}`, {
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const errorMsg = await extractErrorMessage(res, "Failed to get chat result");
+    throw new Error(errorMsg);
+  }
+
+  return res.json();
 }
 
 export interface IndexResponse {
