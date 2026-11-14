@@ -17,7 +17,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import {
   Search,
@@ -180,43 +179,41 @@ export function IndexRepoDialog() {
 
   return (
     <Dialog open={isIndexDialogOpen} onOpenChange={setIsIndexDialogOpen}>
-      <DialogContent className="w-[95vw] sm:max-w-xl max-h-[90vh] overflow-y-auto border-border/80 bg-background/95 backdrop-blur-md p-4 sm:p-6 rounded-2xl">
-        <DialogHeader className="space-y-1.5 pr-8 sm:pr-10">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
-                <Database className="h-5 w-5" />
-              </div>
-              <div>
-                <DialogTitle className="text-lg font-semibold tracking-tight">
+      <DialogContent className="w-[95vw] sm:max-w-[480px] max-h-[88vh] overflow-y-auto overflow-x-hidden border-border/80 bg-background/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl">
+        <DialogHeader className="space-y-1 pr-9">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+              <Database className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <DialogTitle className="text-base font-semibold tracking-tight">
                   Index GitHub Repository
                 </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground">
-                  Index your repository to enable AI search and code answers
-                </DialogDescription>
+                {hasToken ? (
+                  <Badge variant="outline" className="text-[9px] gap-1 border-emerald-500/40 text-emerald-500 h-4 px-1.5 shrink-0">
+                    <CheckCircle2 className="h-2.5 w-2.5" />
+                    {isAuthenticated ? "GitHub OAuth" : "Token Saved"}
+                  </Badge>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-5 text-[9px] px-1.5 gap-1 shrink-0"
+                    onClick={() => {
+                      setIsIndexDialogOpen(false);
+                      setIsAuthModalOpen(true);
+                    }}
+                  >
+                    <GithubIcon className="h-2.5 w-2.5" />
+                    Sign In
+                  </Button>
+                )}
               </div>
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                Index your repository to enable AI search and code answers
+              </DialogDescription>
             </div>
-
-            {/* Auth / Token indicator badge */}
-            {hasToken ? (
-              <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/40 text-emerald-500 h-5 shrink-0">
-                <CheckCircle2 className="h-3 w-3" />
-                {isAuthenticated ? "GitHub OAuth" : "Token Saved"}
-              </Badge>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-6 text-[10px] gap-1 shrink-0"
-                onClick={() => {
-                  setIsIndexDialogOpen(false);
-                  setIsAuthModalOpen(true);
-                }}
-              >
-                <GithubIcon className="h-3 w-3" />
-                Sign In
-              </Button>
-            )}
           </div>
         </DialogHeader>
 
@@ -364,103 +361,101 @@ export function IndexRepoDialog() {
                   />
                 </div>
 
-                <ScrollArea className="h-[220px] w-full rounded-lg border border-border/70">
+                <div className="h-[220px] w-full overflow-y-auto overflow-x-hidden rounded-xl border border-border/70 p-1.5 space-y-1">
                   {filteredRepos.length === 0 ? (
                     <div className="py-8 text-center text-xs text-muted-foreground">
                       No repositories found.
                     </div>
                   ) : (
-                    <div className="p-2 space-y-1 w-full">
-                      {filteredRepos.map((repo) => {
-                        const indexedItem = indexedRepos.find(
-                          (ir) => ir.repoKey.toLowerCase() === repo.fullName.toLowerCase()
-                        );
-                        const isReady = indexedItem?.status === "ready";
-                        const isIndexing = indexedItem?.status === "indexing";
+                    filteredRepos.map((repo) => {
+                      const indexedItem = indexedRepos.find(
+                        (ir) => ir.repoKey.toLowerCase() === repo.fullName.toLowerCase()
+                      );
+                      const isReady = indexedItem?.status === "ready";
+                      const isIndexing = indexedItem?.status === "indexing";
 
-                        return (
-                          <div
-                            key={repo.id}
-                            className="flex items-center justify-between gap-3 rounded-lg p-2 sm:p-2.5 transition-colors hover:bg-muted/60 border border-transparent hover:border-border/50 group w-full"
-                          >
-                            <div className="flex flex-col min-w-0 flex-1 pr-1">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-xs font-semibold text-foreground truncate max-w-[200px] sm:max-w-[260px]">
-                                  {repo.fullName}
-                                </span>
-                                {isReady && (
-                                  <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[9px] h-4 px-1.5 gap-1 shrink-0">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                    Ready
-                                  </Badge>
-                                )}
-                                {isIndexing && (
-                                  <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[9px] h-4 px-1.5 gap-1 shrink-0">
-                                    <Loader2 className="h-2 w-2 animate-spin" />
-                                    Indexing
-                                  </Badge>
-                                )}
-                                {repo.isPrivate && (
-                                  <Badge variant="secondary" className="text-[9px] h-3.5 px-1 gap-0.5 shrink-0">
-                                    <Lock className="h-2.5 w-2.5" />
-                                    Private
-                                  </Badge>
-                                )}
-                              </div>
-                              {repo.description && (
-                                <p className="text-[11px] text-muted-foreground truncate w-full mt-0.5">
-                                  {repo.description}
-                                </p>
+                      return (
+                        <div
+                          key={repo.id}
+                          className="flex items-center justify-between gap-2.5 rounded-lg p-2 transition-colors hover:bg-muted/60 border border-transparent hover:border-border/50 group w-full overflow-hidden"
+                        >
+                          <div className="flex flex-col min-w-0 flex-1 overflow-hidden pr-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="text-xs font-semibold text-foreground truncate min-w-0">
+                                {repo.fullName}
+                              </span>
+                              {isReady && (
+                                <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[9px] h-4 px-1.5 gap-1 shrink-0">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                  Ready
+                                </Badge>
                               )}
-                              <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
-                                {repo.language && (
-                                  <span className="flex items-center gap-1">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                                    {repo.language}
-                                  </span>
-                                )}
-                                <span className="flex items-center gap-0.5">
-                                  <Star className="h-2.5 w-2.5" />
-                                  {repo.stars}
-                                </span>
-                              </div>
+                              {isIndexing && (
+                                <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[9px] h-4 px-1.5 gap-1 shrink-0">
+                                  <Loader2 className="h-2 w-2 animate-spin" />
+                                  Indexing
+                                </Badge>
+                              )}
+                              {repo.isPrivate && (
+                                <Badge variant="secondary" className="text-[9px] h-3.5 px-1 gap-0.5 shrink-0">
+                                  <Lock className="h-2.5 w-2.5" />
+                                  Private
+                                </Badge>
+                              )}
                             </div>
-
-                            <Button
-                              size="sm"
-                              variant={isReady ? "default" : "secondary"}
-                              className={`h-7 text-xs font-medium shrink-0 min-w-[62px] px-2.5 transition-all ${
-                                isReady
-                                  ? "bg-primary text-primary-foreground shadow-xs"
-                                  : "group-hover:bg-primary group-hover:text-primary-foreground"
-                              }`}
-                              onClick={() => {
-                                if (isReady) {
-                                  setSelectedRepo(repo.fullName);
-                                  setIsIndexDialogOpen(false);
-                                } else {
-                                  handleSelectGithubRepo(repo);
-                                }
-                              }}
-                              disabled={indexMutation.isPending || isIndexing}
-                            >
-                              {indexMutation.isPending &&
-                              indexMutation.variables?.repo === repo.fullName ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : isReady ? (
-                                "Chat"
-                              ) : isIndexing ? (
-                                "Indexing"
-                              ) : (
-                                "Index"
+                            {repo.description && (
+                              <p className="text-[11px] text-muted-foreground truncate w-full mt-0.5">
+                                {repo.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
+                              {repo.language && (
+                                <span className="flex items-center gap-1 shrink-0">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                  {repo.language}
+                                </span>
                               )}
-                            </Button>
+                              <span className="flex items-center gap-0.5 shrink-0">
+                                <Star className="h-2.5 w-2.5" />
+                                {repo.stars}
+                              </span>
+                            </div>
                           </div>
-                        );
-                      })}
-                    </div>
+
+                          <Button
+                            size="sm"
+                            variant={isReady ? "default" : "secondary"}
+                            className={`h-7 text-xs font-medium shrink-0 min-w-[58px] px-2.5 transition-all ${
+                              isReady
+                                ? "bg-primary text-primary-foreground shadow-xs"
+                                : "group-hover:bg-primary group-hover:text-primary-foreground"
+                            }`}
+                            onClick={() => {
+                              if (isReady) {
+                                setSelectedRepo(repo.fullName);
+                                setIsIndexDialogOpen(false);
+                              } else {
+                                handleSelectGithubRepo(repo);
+                              }
+                            }}
+                            disabled={indexMutation.isPending || isIndexing}
+                          >
+                            {indexMutation.isPending &&
+                            indexMutation.variables?.repo === repo.fullName ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : isReady ? (
+                              "Chat"
+                            ) : isIndexing ? (
+                              "Indexing"
+                            ) : (
+                              "Index"
+                            )}
+                          </Button>
+                        </div>
+                      );
+                    })
                   )}
-                </ScrollArea>
+                </div>
               </>
             )}
           </TabsContent>
