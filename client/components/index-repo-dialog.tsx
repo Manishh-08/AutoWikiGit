@@ -179,19 +179,19 @@ export function IndexRepoDialog() {
 
   return (
     <Dialog open={isIndexDialogOpen} onOpenChange={setIsIndexDialogOpen}>
-      <DialogContent className="w-[95vw] sm:max-w-[480px] max-h-[88vh] overflow-y-auto overflow-x-hidden border-border/80 bg-background/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl">
-        <DialogHeader className="space-y-1 pr-9">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
-              <Database className="h-4 w-4" />
+      <DialogContent className="w-[92vw] sm:max-w-[490px] max-h-[90vh] border-border/80 bg-background/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl flex flex-col gap-3.5 shadow-2xl overflow-hidden">
+        <DialogHeader className="pr-10 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
+              <Database className="h-4.5 w-4.5" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <DialogTitle className="text-base font-semibold tracking-tight">
+              <div className="flex items-center gap-2 flex-wrap">
+                <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
                   Index GitHub Repository
                 </DialogTitle>
                 {hasToken ? (
-                  <Badge variant="outline" className="text-[9px] gap-1 border-emerald-500/40 text-emerald-500 h-4 px-1.5 shrink-0">
+                  <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/40 text-emerald-500 h-4 px-1.5 shrink-0">
                     <CheckCircle2 className="h-2.5 w-2.5" />
                     {isAuthenticated ? "GitHub OAuth" : "Token Saved"}
                   </Badge>
@@ -199,7 +199,7 @@ export function IndexRepoDialog() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-5 text-[9px] px-1.5 gap-1 shrink-0"
+                    className="h-5 text-[10px] px-2 gap-1 shrink-0"
                     onClick={() => {
                       setIsIndexDialogOpen(false);
                       setIsAuthModalOpen(true);
@@ -210,7 +210,7 @@ export function IndexRepoDialog() {
                   </Button>
                 )}
               </div>
-              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5 truncate">
                 Index your repository to enable AI search and code answers
               </DialogDescription>
             </div>
@@ -218,16 +218,16 @@ export function IndexRepoDialog() {
         </DialogHeader>
 
         {/* User Token Drawer / Input */}
-        <div className="rounded-xl border border-border/70 bg-muted/30 p-3 space-y-2 mt-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
-              <Key className="h-3.5 w-3.5 text-primary" />
+        <div className="rounded-xl border border-border/70 bg-muted/30 p-2.5 space-y-1.5 shrink-0">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5 font-medium text-foreground">
+              <Key className="h-3.5 w-3.5 text-primary shrink-0" />
               <span>User GitHub Token (PAT)</span>
             </div>
             <button
               type="button"
               onClick={() => setShowTokenField(!showTokenField)}
-              className="text-[10px] text-muted-foreground hover:text-foreground underline cursor-pointer"
+              className="text-[11px] text-muted-foreground hover:text-foreground underline cursor-pointer"
             >
               {showTokenField ? "Hide" : userGithubToken ? "Edit Token" : "Enter Token"}
             </button>
@@ -235,13 +235,13 @@ export function IndexRepoDialog() {
 
           {showTokenField && (
             <div className="space-y-1.5 pt-1">
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 w-full">
                 <Input
                   type="password"
                   placeholder="github_pat_... or ghp_..."
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value)}
-                  className="h-8 text-xs font-mono bg-background"
+                  className="h-8 text-xs font-mono bg-background flex-1 min-w-0"
                 />
                 <Button
                   type="button"
@@ -263,28 +263,28 @@ export function IndexRepoDialog() {
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as "github" | "manual")}
-          className="mt-2"
+          className="w-full flex-1 flex flex-col min-h-0"
         >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="manual" className="text-xs gap-1.5">
-              <FileCode2 className="h-3.5 w-3.5" />
-              Repository URL / Key
+          <TabsList className="grid w-full grid-cols-2 h-9 p-1 bg-muted/60 rounded-xl shrink-0">
+            <TabsTrigger value="manual" className="text-xs gap-1.5 min-w-0 truncate">
+              <FileCode2 className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">Repository URL</span>
             </TabsTrigger>
-            <TabsTrigger value="github" className="text-xs gap-1.5">
-              <GithubIcon className="h-3.5 w-3.5" />
-              My GitHub Repos
+            <TabsTrigger value="github" className="text-xs gap-1.5 min-w-0 truncate">
+              <GithubIcon className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">My Repositories</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Manual / Public URL Tab */}
-          <TabsContent value="manual" className="space-y-3 pt-2">
+          <TabsContent value="manual" className="space-y-3 pt-2 mt-0">
             <form onSubmit={handleManualIndex} className="space-y-3">
               <div className="space-y-1.5">
                 <Input
                   placeholder="e.g. facebook/react or https://github.com/expressjs/express"
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
-                  className="h-9 text-xs font-mono"
+                  className="h-9 text-xs font-mono w-full"
                   disabled={indexMutation.isPending}
                 />
                 <p className="text-[11px] text-muted-foreground">
@@ -313,7 +313,7 @@ export function IndexRepoDialog() {
           </TabsContent>
 
           {/* Connected GitHub Repos Tab */}
-          <TabsContent value="github" className="space-y-3 pt-2">
+          <TabsContent value="github" className="space-y-2.5 pt-2 mt-0 flex-1 flex flex-col min-h-0">
             {!hasToken ? (
               <div className="rounded-xl border border-dashed border-border p-6 text-center space-y-3">
                 <GithubIcon className="h-8 w-8 mx-auto text-muted-foreground opacity-60" />
@@ -351,17 +351,17 @@ export function IndexRepoDialog() {
               </div>
             ) : (
               <>
-                <div className="relative">
+                <div className="relative w-full shrink-0">
                   <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                   <Input
                     placeholder="Search your repositories..."
                     value={repoSearch}
                     onChange={(e) => setRepoSearch(e.target.value)}
-                    className="pl-8 h-8 text-xs"
+                    className="pl-8 h-8 text-xs w-full"
                   />
                 </div>
 
-                <div className="h-[220px] w-full overflow-y-auto overflow-x-hidden rounded-xl border border-border/70 p-1.5 space-y-1">
+                <div className="max-h-[220px] w-full overflow-y-auto rounded-xl border border-border/70 p-1.5 space-y-1 bg-muted/10">
                   {filteredRepos.length === 0 ? (
                     <div className="py-8 text-center text-xs text-muted-foreground">
                       No repositories found.
@@ -377,21 +377,21 @@ export function IndexRepoDialog() {
                       return (
                         <div
                           key={repo.id}
-                          className="flex items-center justify-between gap-2.5 rounded-lg p-2 transition-colors hover:bg-muted/60 border border-transparent hover:border-border/50 group w-full overflow-hidden"
+                          className="flex items-center justify-between gap-2.5 rounded-lg p-2 transition-colors hover:bg-muted/60 border border-transparent hover:border-border/50 group w-full"
                         >
-                          <div className="flex flex-col min-w-0 flex-1 overflow-hidden pr-1">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span className="text-xs font-semibold text-foreground truncate min-w-0">
+                          <div className="min-w-0 flex-1 pr-1">
+                            <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                              <span className="text-xs font-semibold text-foreground truncate max-w-[160px] sm:max-w-[220px]">
                                 {repo.fullName}
                               </span>
                               {isReady && (
-                                <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[9px] h-4 px-1.5 gap-1 shrink-0">
+                                <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[9px] h-4 px-1 gap-0.5 shrink-0">
                                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                                   Ready
                                 </Badge>
                               )}
                               {isIndexing && (
-                                <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[9px] h-4 px-1.5 gap-1 shrink-0">
+                                <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[9px] h-4 px-1 gap-0.5 shrink-0">
                                   <Loader2 className="h-2 w-2 animate-spin" />
                                   Indexing
                                 </Badge>
@@ -425,7 +425,7 @@ export function IndexRepoDialog() {
                           <Button
                             size="sm"
                             variant={isReady ? "default" : "secondary"}
-                            className={`h-7 text-xs font-medium shrink-0 min-w-[58px] px-2.5 transition-all ${
+                            className={`h-7 text-xs font-medium shrink-0 min-w-[62px] px-2.5 transition-all ${
                               isReady
                                 ? "bg-primary text-primary-foreground shadow-xs"
                                 : "group-hover:bg-primary group-hover:text-primary-foreground"
