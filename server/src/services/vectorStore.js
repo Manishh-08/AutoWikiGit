@@ -32,8 +32,39 @@ function repoToNamespace(repo) {
   return repo.replace("/", "-");
 }
 
+function getIndexName() {
+  return process.env.PINECONE_HYBRID_INDEX || process.env.PINECONE_INDEX || "auto-wiki-git-hybrid-v1";
+}
+
+export async function ensurePineconeIndex() {
+  const indexName = getIndexName();
+  try {
+    const { indexes } = await pc.listIndexes();
+    const exists = indexes?.some((idx) => idx.name === indexName);
+    if (!exists) {
+      console.log(`Pinecone index "${indexName}" not found. Creating it with dotproduct metric...`);
+      await pc.createIndex({
+        name: indexName,
+        dimension: 1536,
+        metric: "dotproduct",
+        spec: {
+          serverless: {
+            cloud: "aws",
+            region: "us-east-1",
+          },
+        },
+      });
+      console.log(`Pinecone index "${indexName}" created successfully!`);
+    } else {
+      console.log(`Pinecone index "${indexName}" is ready.`);
+    }
+  } catch (error) {
+    console.warn(`Could not verify/create Pinecone index "${indexName}":`, error.message);
+  }
+}
+
 function getIndex(namespace) {
-  const indexName = process.env.PINECONE_HYBRID_INDEX || "auto-wiki-git-hybrid-v1";
+  const indexName = getIndexName();
   return pc.index(indexName).namespace(namespace);
 }
 
@@ -135,19 +166,28 @@ export async function search(repo, question, topK = DEFAULT_TOP_K) {
 
 export async function getRepoStatus(repo) {
   const namespace = repoToNamespace(repo);
-  const indexName = process.env.PINECONE_HYBRID_INDEX || "auto-wiki-git-hybrid-v1";
-  const stats = await pc.index(indexName).describeIndexStats();
-  const ns = stats.namespaces?.[namespace];
-  if (ns && ns.recordCount > 0) {
+  const indexName = getIndexName();
+  try {
+    const stats = await pc.index(indexName).describeIndexStats();
+    const ns = stats.namespaces?.[namespace];
+    if (ns && ns.recordCount > 0) {
+      return {
+        repo,
+        status: "ready",
+        recordCount: ns.recordCount,
+      };
+    }
     return {
       repo,
-      status: "ready",
-      recordCount: ns.recordCount,
+      status: "indexing",
+      recordCount: 0,
+    };
+  } catch (error) {
+    console.error(`Error fetching index stats for "${indexName}":`, error.message);
+    return {
+      repo,
+      status: "indexing",
+      recordCount: 0,
     };
   }
-  return {
-    repo,
-    status: "indexing",
-    recordCount: 0,
-  };
 }

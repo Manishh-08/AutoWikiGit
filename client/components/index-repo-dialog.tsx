@@ -86,13 +86,13 @@ export function IndexRepoDialog() {
         repoKey,
         name: name || owner,
         owner: owner || "user",
-        status: "ready",
+        status: "indexing",
       });
 
       setSelectedRepo(repoKey);
-      updateRepoStatus(repoKey, "ready");
-      toast.success(`${clean} is ready!`, {
-        description: "Repository is indexed. You can start chatting now.",
+      updateRepoStatus(repoKey, "indexing");
+      toast.info(`Indexing started for ${clean}`, {
+        description: "Repository is indexing in the background. It will show 'Ready' once complete.",
       });
 
       setIsIndexDialogOpen(false);
@@ -180,11 +180,11 @@ export function IndexRepoDialog() {
 
   return (
     <Dialog open={isIndexDialogOpen} onOpenChange={setIsIndexDialogOpen}>
-      <DialogContent className="w-[95vw] max-w-[580px] max-h-[90vh] overflow-y-auto border-border/80 bg-background/95 backdrop-blur-md p-4 sm:p-6 rounded-2xl">
-        <DialogHeader className="space-y-1.5">
+      <DialogContent className="w-[95vw] sm:max-w-xl max-h-[90vh] overflow-y-auto border-border/80 bg-background/95 backdrop-blur-md p-4 sm:p-6 rounded-2xl">
+        <DialogHeader className="space-y-1.5 pr-8 sm:pr-10">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
                 <Database className="h-5 w-5" />
               </div>
               <div>
@@ -199,7 +199,7 @@ export function IndexRepoDialog() {
 
             {/* Auth / Token indicator badge */}
             {hasToken ? (
-              <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/40 text-emerald-500 h-5">
+              <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/40 text-emerald-500 h-5 shrink-0">
                 <CheckCircle2 className="h-3 w-3" />
                 {isAuthenticated ? "GitHub OAuth" : "Token Saved"}
               </Badge>
@@ -207,7 +207,7 @@ export function IndexRepoDialog() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-6 text-[10px] gap-1"
+                className="h-6 text-[10px] gap-1 shrink-0"
                 onClick={() => {
                   setIsIndexDialogOpen(false);
                   setIsAuthModalOpen(true);
@@ -364,13 +364,13 @@ export function IndexRepoDialog() {
                   />
                 </div>
 
-                <ScrollArea className="h-[200px] rounded-lg border border-border/70 p-2">
+                <ScrollArea className="h-[220px] w-full rounded-lg border border-border/70">
                   {filteredRepos.length === 0 ? (
                     <div className="py-8 text-center text-xs text-muted-foreground">
                       No repositories found.
                     </div>
                   ) : (
-                    <div className="space-y-1">
+                    <div className="p-2 space-y-1 w-full">
                       {filteredRepos.map((repo) => {
                         const indexedItem = indexedRepos.find(
                           (ir) => ir.repoKey.toLowerCase() === repo.fullName.toLowerCase()
@@ -381,34 +381,34 @@ export function IndexRepoDialog() {
                         return (
                           <div
                             key={repo.id}
-                            className="flex items-center justify-between rounded-lg p-2.5 transition-colors hover:bg-muted/60 border border-transparent hover:border-border/50 group"
+                            className="flex items-center justify-between gap-3 rounded-lg p-2 sm:p-2.5 transition-colors hover:bg-muted/60 border border-transparent hover:border-border/50 group w-full"
                           >
-                            <div className="flex flex-col min-w-0 pr-2">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-semibold text-foreground truncate">
+                            <div className="flex flex-col min-w-0 flex-1 pr-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-xs font-semibold text-foreground truncate max-w-[200px] sm:max-w-[260px]">
                                   {repo.fullName}
                                 </span>
                                 {isReady && (
-                                  <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[9px] h-4 px-1.5 gap-1">
+                                  <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[9px] h-4 px-1.5 gap-1 shrink-0">
                                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                                     Ready
                                   </Badge>
                                 )}
                                 {isIndexing && (
-                                  <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[9px] h-4 px-1.5 gap-1">
+                                  <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[9px] h-4 px-1.5 gap-1 shrink-0">
                                     <Loader2 className="h-2 w-2 animate-spin" />
                                     Indexing
                                   </Badge>
                                 )}
                                 {repo.isPrivate && (
-                                  <Badge variant="secondary" className="text-[9px] h-3.5 px-1 gap-0.5">
+                                  <Badge variant="secondary" className="text-[9px] h-3.5 px-1 gap-0.5 shrink-0">
                                     <Lock className="h-2.5 w-2.5" />
                                     Private
                                   </Badge>
                                 )}
                               </div>
                               {repo.description && (
-                                <p className="text-[11px] text-muted-foreground truncate max-w-sm">
+                                <p className="text-[11px] text-muted-foreground truncate w-full mt-0.5">
                                   {repo.description}
                                 </p>
                               )}
@@ -429,7 +429,7 @@ export function IndexRepoDialog() {
                             <Button
                               size="sm"
                               variant={isReady ? "default" : "secondary"}
-                              className={`h-7 text-xs font-medium shrink-0 transition-all ${
+                              className={`h-7 text-xs font-medium shrink-0 min-w-[62px] px-2.5 transition-all ${
                                 isReady
                                   ? "bg-primary text-primary-foreground shadow-xs"
                                   : "group-hover:bg-primary group-hover:text-primary-foreground"
@@ -442,13 +442,15 @@ export function IndexRepoDialog() {
                                   handleSelectGithubRepo(repo);
                                 }
                               }}
-                              disabled={indexMutation.isPending}
+                              disabled={indexMutation.isPending || isIndexing}
                             >
                               {indexMutation.isPending &&
                               indexMutation.variables?.repo === repo.fullName ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
                               ) : isReady ? (
                                 "Chat"
+                              ) : isIndexing ? (
+                                "Indexing"
                               ) : (
                                 "Index"
                               )}

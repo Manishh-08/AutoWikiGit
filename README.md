@@ -61,7 +61,7 @@ flowchart LR
 ### 1. Prerequisites
 - **Node.js**: v20+ recommended
 - **PostgreSQL Database** (e.g., Neon, Supabase, or local PostgreSQL)
-- **Pinecone Account**: An active Pinecone serverless index (e.g., dimension `1536` for `text-embedding-3-small`)
+- **Pinecone Account**: An active Pinecone serverless index with `dotproduct` metric (dimension `1536` for `text-embedding-3-small`, e.g. `auto-wiki-git-hybrid-v1`) to support hybrid sparse + dense vectors
 - **OpenRouter or OpenAI API Key**: For embeddings and chat generation
 - **GitHub OAuth App**: For Better-Auth user authentication (or Personal Access Tokens)
 
@@ -105,7 +105,7 @@ GITHUB_CLIENT_SECRET=your_github_client_secret_here
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 OPENROUTER_MODEL=openai/gpt-4o-mini
 PINECONE_API_KEY=your_pinecone_api_key_here
-PINECONE_INDEX=auto-wiki-git
+PINECONE_HYBRID_INDEX=auto-wiki-git-hybrid-v1
 
 # Inngest
 INNGEST_DEV=1

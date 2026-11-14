@@ -8,6 +8,7 @@ import chatRoutes from "./routes/chat.routes.js"
 import { auth } from './auth/auth.js';
 import { toNodeHandler } from "better-auth/node";
 import { requireAuth } from './middleware/auth.middleware.js';
+import { ensurePineconeIndex } from './services/vectorStore.js';
 
 const port = process.env.PORT ?? 3001;
 
@@ -45,4 +46,7 @@ app.use("/api/chat", requireAuth, chatRoutes);
 
 app.listen(port, () => {
   console.log(`server is running on port ${port}`);
+  ensurePineconeIndex().catch((err) => {
+    console.error("Error during Pinecone index initialization:", err);
+  });
 })

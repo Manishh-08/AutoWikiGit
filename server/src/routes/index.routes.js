@@ -114,9 +114,14 @@ router.get("/status", async (req, res) => {
     return res.status(400).json({ error: "repo query parameter is required" });
   }
 
-  const { repoKey } = parseRepo(repo);
-  const status = await getRepoStatus(repoKey);
-  res.json(status);
+  try {
+    const { repoKey } = parseRepo(repo);
+    const status = await getRepoStatus(repoKey);
+    res.json(status);
+  } catch (error) {
+    console.error("Status endpoint error:", error);
+    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch status" });
+  }
 });
 
 export default router;

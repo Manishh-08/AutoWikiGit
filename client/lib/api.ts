@@ -178,7 +178,7 @@ export async function fetchRepoStatus(repo: string): Promise<RepoStatusResponse>
   });
 
   if (!res.ok) {
-    return { repo, status: "ready" };
+    return { repo, status: "indexing" };
   }
 
   return res.json();

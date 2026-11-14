@@ -54,10 +54,13 @@ function SidebarBody({ onSelectRepo }: SidebarBodyProps) {
   const reindexMutation = useMutation({
     mutationFn: (repoKey: string) => indexRepository(repoKey),
     onSuccess: (_, repoKey) => {
-      updateRepoStatus(repoKey, "ready");
-      toast.success(`${repoKey} is ready to chat!`);
+      updateRepoStatus(repoKey, "indexing");
+      toast.info(`Re-indexing started for ${repoKey}`, {
+        description: "Background indexing in progress. It will show 'Ready' once complete.",
+      });
     },
-    onError: (err: Error) => {
+    onError: (err: Error, repoKey) => {
+      updateRepoStatus(repoKey, "error");
       toast.error(err.message || "Failed to re-index");
     },
   });
@@ -238,6 +241,22 @@ export function SidebarRepos() {
     setIsMobileSidebarOpen,
     updateRepoStatus,
   } = useAppStore();
+
+  // Initial check on mount to ensure local state reflects actual Pinecone status
+  useEffect(() => {
+    if (indexedRepos.length === 0) return;
+    indexedRepos.forEach(async (repo) => {
+      try {
+        const res = await fetchRepoStatus(repo.repoKey);
+        if (res.status && res.status !== repo.status) {
+          updateRepoStatus(repo.repoKey, res.status, { chunkCount: res.recordCount });
+        }
+      } catch {
+        // ignore background status checks
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Check and poll status for any repo in "indexing" state
   useEffect(() => {
