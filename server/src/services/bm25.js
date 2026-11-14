@@ -14,8 +14,10 @@ function positiveNumber(value, fallback) {
 }
 
 function tokenize(text) {
-  return (text.match(/[A-Za-z_$][A-Za-z0-9_$]*|[0-9]+|[^A-Za-z0-9_$\s]/g) || [])
-    .map((token) => token.toLowerCase());
+  const safeText = typeof text === "string" ? text.toWellFormed().replace(/\0/g, "") : "";
+  return (safeText.match(/[A-Za-z_$][A-Za-z0-9_$]*|[0-9]+|[^A-Za-z0-9_$\s]/g) || [])
+    .map((token) => token.toLowerCase().trim())
+    .filter((token) => token.length > 0 && !/[\uD800-\uDFFF\u0000\uFFFD]/.test(token));
 }
 
 function toSparseVector(weights) {
@@ -108,12 +110,31 @@ async function ensureTable() {
 
 export async function savePendingBm25Model(repo, model) {
   await ensureTable();
+
+  // Safeguard JSONB payload against lone surrogates, null bytes, or malformed tokens
+  const safeModel = {
+    version: model.version || "bm25-v1",
+    k1: model.k1,
+    b: model.b,
+    documentCount: model.documentCount || 0,
+    averageDocumentLength: model.averageDocumentLength || 0,
+    vocabulary: {},
+  };
+
+  if (model.vocabulary && typeof model.vocabulary === "object") {
+    for (const [token, data] of Object.entries(model.vocabulary)) {
+      if (token && !/[\uD800-\uDFFF\u0000\uFFFD]/.test(token)) {
+        safeModel.vocabulary[token] = data;
+      }
+    }
+  }
+
   await pool.query(
     `INSERT INTO bm25_models (repo, model, status, updated_at)
      VALUES ($1, $2::jsonb, 'pending', NOW())
      ON CONFLICT (repo) DO UPDATE
      SET model = EXCLUDED.model, status = 'pending', updated_at = NOW()`,
-    [repo, JSON.stringify(model)],
+    [repo, JSON.stringify(safeModel)],
   );
 }
 

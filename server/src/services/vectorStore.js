@@ -71,7 +71,7 @@ function getIndex(namespace) {
 function normalizeDocuments(documents) {
   return documents
     .map((doc) => ({
-      pageContent: typeof doc.pageContent === "string" ? doc.pageContent : "",
+      pageContent: typeof doc.pageContent === "string" ? doc.pageContent.toWellFormed().replace(/\0/g, "") : "",
       metadata: doc.metadata ?? {},
     }))
     .filter((doc) => doc.pageContent.trim().length > 0);

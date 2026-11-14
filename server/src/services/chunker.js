@@ -9,11 +9,19 @@ export async function chunkFiles(files, repo) {
   const documents = [];
 
   for (const file of files) {
+    const safeContent = typeof file.content === "string"
+      ? file.content.toWellFormed().replace(/\0/g, "")
+      : "";
     const chunks = await splitter.createDocuments(
-      [file.content],
+      [safeContent],
       [{ path: file.path, repo }],
     );
-    documents.push(...chunks);
+    for (const chunk of chunks) {
+      if (typeof chunk.pageContent === "string") {
+        chunk.pageContent = chunk.pageContent.toWellFormed().replace(/\0/g, "");
+      }
+      documents.push(chunk);
+    }
   }
 
   return documents;

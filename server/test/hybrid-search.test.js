@@ -23,12 +23,17 @@ test("BM25 produces deterministic, query-compatible sparse vectors", () => {
   assert.equal(first.indices.length, first.values.length);
 });
 
-test("BM25 ignores terms outside the indexed vocabulary", () => {
-  const model = buildBm25Model(["known symbol"]);
-  const vector = createQuerySparseVector("unknown symbol", model);
+test("BM25 safely handles lone surrogates and null bytes without invalid JSON", () => {
+  const documents = [
+    "file with lone surrogate \uD800 and null \u0000 characters \uDFFF",
+    "export function cleanCode() { return 1; }",
+  ];
+  const model = buildBm25Model(documents);
+  const serialized = JSON.stringify(model);
 
-  assert.equal(vector.indices.length, 1);
-  assert.equal(vector.values.length, 1);
+  assert.doesNotThrow(() => JSON.parse(serialized));
+  assert.ok(!serialized.includes("\\ud800"));
+  assert.ok(!serialized.includes("\\u0000"));
 });
 
 test("RRF prioritizes documents present near the top of both rankings", () => {

@@ -103,7 +103,7 @@ export async function fetchRepoFiles(githubAccessToken, owner, repo) {
 
     files.push({
       path: item.path,
-      content: Buffer.from(blob.content, "base64").toString("utf8"),
+      content: Buffer.from(blob.content, "base64").toString("utf8").toWellFormed().replace(/\0/g, ""),
     });
 
     if (files.length >= 200) break;
