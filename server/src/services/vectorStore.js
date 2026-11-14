@@ -142,10 +142,14 @@ export async function search(repo, question, topK = DEFAULT_TOP_K) {
     embeddings.embedQuery(question),
     Promise.resolve(createQuerySparseVector(question, model)),
   ]);
+  const zeroVector = new Array(vector.length).fill(0);
   const [denseResponse, sparseResponse] = await Promise.all([
     index.query({ vector, topK: fetchK, includeMetadata: true }),
     sparseVector.indices.length
-      ? index.query({ sparseVector, topK: fetchK, includeMetadata: true })
+      ? index.query({ vector: zeroVector, sparseVector, topK: fetchK, includeMetadata: true }).catch((err) => {
+          console.warn("Sparse query fallback:", err.message);
+          return { matches: [] };
+        })
       : Promise.resolve({ matches: [] }),
   ]);
   const matches = [...(denseResponse.matches ?? []), ...(sparseResponse.matches ?? [])];
